@@ -1,5 +1,10 @@
 # Ultra-TM02 项目 Git忽略配置
 
+# 敏感信息 (绝对不要提交!)
+.credentials
+.env
+*.secret
+
 # Python
 __pycache__/
 *.py[cod]
