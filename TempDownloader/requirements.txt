@@ -1,0 +1,15 @@
+# Ultra-TM02 超低温温度测量模块上位机软件依赖
+# TempDownloader v1.0
+
+# GUI框架
+PyQt5>=5.15.0
+
+# 串口通讯
+pyserial>=3.5
+
+# 数据处理
+numpy>=1.21.0
+
+# 日志
+loguru>=0.6.0
+

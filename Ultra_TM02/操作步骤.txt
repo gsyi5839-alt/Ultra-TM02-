@@ -1,0 +1,212 @@
+============================================================
+      Ultra-TM02 超低温温度测量模块 - STM32CubeIDE开发指南
+============================================================
+
+【准备工作】下载安装 STM32CubeIDE
+
+1. 访问: https://www.st.com/stm32cubeide
+2. 点击 "Get Software" → 选择 Windows 版本
+3. 注册ST账号（免费）后下载
+4. 安装（约2GB，安装时间较长）
+
+============================================================
+
+【步骤1】打开工程
+
+1. 启动 STM32CubeIDE
+
+2. File → Open Projects from File System
+   → Directory → 选择: C:\c\Ultra_TM02
+   → 勾选 Ultra_TM02
+   → Finish
+
+3. 或者直接双击 Ultra_TM02.ioc 文件
+   → 选择用 STM32CubeIDE 打开
+
+============================================================
+
+【步骤2】生成代码
+
+1. 双击打开 Ultra_TM02.ioc 文件
+
+2. 在 Pinout & Configuration 界面检查配置:
+   ✓ MCU: STM32F411RET6
+   ✓ SPI1, USART6, USB_OTG_FS 已配置
+
+3. 点击右上角 "Project" → "Generate Code"
+   或按 Alt+K
+
+4. 等待生成完成，会创建:
+   - Drivers/       HAL库
+   - Middlewares/   USB中间件
+   - USB_DEVICE/    USB CDC
+
+============================================================
+
+【步骤3】添加自定义代码到工程
+
+方法1: 在Project Explorer中操作
+   1. 右键项目 → New → Source Folder
+   2. 分别创建: BSP, Service, App (如果不存在)
+   3. 将对应的.c/.h文件拖入
+
+方法2: 直接在文件系统中已经存在
+   BSP/Inc/, BSP/Src/
+   Service/Inc/, Service/Src/
+   App/Inc/, App/Src/
+
+============================================================
+
+【步骤4】配置Include路径
+
+1. 右键项目 → Properties
+
+2. C/C++ Build → Settings → MCU GCC Compiler → Include paths
+
+3. 点击 "Add" 图标，添加:
+   ../BSP/Inc
+   ../Service/Inc
+   ../App/Inc
+
+4. 点击 Apply and Close
+
+============================================================
+
+【步骤5】添加源文件到编译
+
+1. 右键项目 → Properties
+
+2. C/C++ Build → Settings → MCU GCC Compiler → Source Location
+
+3. 添加源文件夹:
+   /Ultra_TM02/BSP/Src
+   /Ultra_TM02/Service/Src
+   /Ultra_TM02/App/Src
+
+或者:
+   右键 BSP/Src 文件夹 → Add to Build
+
+============================================================
+
+【步骤6】修改 main.c
+
+打开 Core/Src/main.c
+
+1. 在 /* USER CODE BEGIN Includes */ 后添加:
+
+   #include "bsp_gpio.h"
+   #include "bsp_spi.h"
+   #include "bsp_uart.h"
+   #include "svc_adc.h"
+   #include "svc_dac.h"
+   #include "svc_lcd.h"
+   #include "svc_usb.h"
+   #include "app_temp.h"
+   #include "app_param.h"
+   #include "app_comm.h"
+   #include "app_output.h"
+
+2. 在 /* USER CODE BEGIN 2 */ 后添加:
+
+   /* 自定义初始化 */
+   BSP_GPIO_Init();
+   BSP_SPI_Init();
+   BSP_UART_Init();
+   
+   SVC_ADC_Init();
+   SVC_DAC_Init();
+   SVC_LCD_Init();
+   SVC_USB_Init();
+   
+   APP_Param_Init();
+   APP_Temp_Init();
+   APP_Output_Init();
+   APP_Comm_Init();
+   
+   /* 启动测量 */
+   APP_Temp_Start();
+
+3. 在 while(1) 循环内 /* USER CODE BEGIN 3 */ 后添加:
+
+   APP_Temp_Process();
+   APP_Comm_Process();
+   SVC_LCD_Update();
+   
+   if (APP_Temp_IsRunning()) {
+       APP_Output_UpdateCurrent(APP_Temp_GetValue());
+   }
+
+============================================================
+
+【步骤7】修改 USB CDC 接收回调
+
+打开 USB_DEVICE/App/usbd_cdc_if.c
+
+找到 CDC_Receive_FS 函数，修改为:
+
+static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
+{
+  /* USER CODE BEGIN 6 */
+  USBD_CDC_SetRxBuffer(&hUsbDeviceFS, &Buf[0]);
+  USBD_CDC_ReceivePacket(&hUsbDeviceFS);
+  
+  /* 调用USB服务接收回调 */
+  extern void SVC_USB_RxCallback(uint8_t *data, uint32_t len);
+  SVC_USB_RxCallback(Buf, *Len);
+  
+  return (USBD_OK);
+  /* USER CODE END 6 */
+}
+
+============================================================
+
+【步骤8】编译
+
+1. Project → Build Project (Ctrl+B)
+
+2. 查看 Console 窗口，确认无错误
+
+3. 如有错误，双击错误信息定位问题
+
+============================================================
+
+【步骤9】下载调试
+
+1. 连接 ST-Link 到主板 H1 接口:
+   H1.1 (3V3)   → [可选]
+   H1.2 (GND)   → ST-Link GND
+   H1.3 (SWDIO) → ST-Link SWDIO
+   H1.4 (SWCLK) → ST-Link SWCLK
+
+2. Run → Debug Configurations
+   → STM32 Cortex-M C/C++ Application
+   → 选择工程 → Debug
+
+3. 或直接点击工具栏的 Debug 按钮
+
+============================================================
+
+【常见问题】
+
+Q: 找不到头文件
+A: 检查Include paths是否添加正确
+
+Q: 源文件未编译
+A: 右键源文件夹 → Add to Build
+
+Q: USB连接不上
+A: 检查时钟配置，USB需要48MHz
+
+Q: 下载失败
+A: 检查ST-Link连接，安装ST-Link驱动
+
+============================================================
+
+【快捷键】
+
+Ctrl+B        编译
+F11           调试
+Ctrl+F11      运行
+Ctrl+Shift+B  清理后编译
+
+============================================================

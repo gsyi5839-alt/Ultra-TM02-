@@ -1,0 +1,61 @@
+# Ultra-TM02 项目 Git忽略配置
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+*.egg-info/
+dist/
+build/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# STM32CubeIDE
+Debug/
+Release/
+*.o
+*.d
+*.elf
+*.bin
+*.hex
+*.map
+*.list
+*.su
+
+# MDK-ARM (Keil)
+MDK-ARM/*.uvguix.*
+MDK-ARM/DebugConfig/
+MDK-ARM/Listings/
+MDK-ARM/Objects/
+MDK-ARM/*.bak
+MDK-ARM/*.dep
+MDK-ARM/RTE/
+
+# Logs
+logs/
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Temporary
+*.tmp
+*.temp
+*.bak
+
+# STM32 Drivers (太大，从HAL库获取)
+Ultra_TM02/Drivers/
+Ultra_TM02/Middlewares/
+
